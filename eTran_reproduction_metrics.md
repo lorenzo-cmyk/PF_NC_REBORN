@@ -50,6 +50,7 @@ Use these target values and formulas to verify and reproduce the evaluations des
 | **Linux - TCP** | Total CPU cycles spent per request (total kcycles, see breakdown below) | kcycles | **12.51** | |
 | **eTran - Homa** | Total CPU cycles spent per request (total kcycles, see breakdown below) | kcycles | **5.48** | |
 | **Linux - Homa** | Total CPU cycles spent per request (total kcycles, see breakdown below) | kcycles | **17.43** | |
+| **eTran (Pacing)** | Traffic shaping rate conformance deviation under pacing engine | % | **< 0.4** | |
 
 ---
 
