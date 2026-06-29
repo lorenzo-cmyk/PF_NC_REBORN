@@ -33,6 +33,10 @@ An empty column/cell has been provided in each table for you to record your own 
 | **eTran - TCP** | Total CPU cycles spent per request (total kcycles, see breakdown below) | kcycles | **4.37** | |
 | **eTran - Homa** | Total CPU cycles spent per request (total kcycles, see breakdown below) | kcycles | **5.48** | |
 | **eTran (Pacing)** | Traffic shaping rate conformance deviation under pacing engine | % | **< 0.4** | |
+| **eTran (Pacing)** | Aggregate throughput for multiple flows with an 8 Gbps target | Mbps | **7950 ~ 8050** | |
+| **eTran - TCP** | Throughput penalty under 1% packet loss | % | **~8** (compared to `~3%` for Linux TCP) | |
+| **eTran - TCP** | Throughput penalty under 5% packet loss | % | **~33** (compared to `~25%` for Linux TCP) | |
+| **eTran - Homa** | Throughput penalty under 5% packet loss | % | **~90-100** (comparable with Linux Homa) | |
 
 ---
 
