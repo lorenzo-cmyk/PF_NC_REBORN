@@ -74,3 +74,19 @@ Evaluated across two cores: one core generates ACK/credit packets using `XDP_GEN
 | Operation Benchmark | Expected Overall Tpt (Mpps) | Measured Overall Tpt (Mpps) | Expected Active CPU Cores | Measured Active CPU Cores | Expected Per-Core Tpt (Mpps) | Measured Per-Core Tpt (Mpps) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **rx-drop + XDP_GEN** | **6.03** | | 1.35 | | **4.47** | |
+
+---
+
+## 4. Minimum Required Physical Machines for Reproduction
+
+To successfully reproduce the performance benchmarks presented in the paper, ensure you have the appropriate number of dedicated physical servers (ideally equipped with 25 Gbps ConnectX-4 NICs and connected to a 25 Gbps switch):
+
+* **Single-Stream Microbenchmarks (Median Latency, 1MB Large Throughput, CPU Cycle Breakdown, and eBPF Hook Performance)**:
+  * **Minimum required**: **2 Physical Machines** (1 Server, 1 Client).
+* **Multi-threaded Key-Value Store Workloads (Zipf KV Workload)**:
+  * **Minimum required**: **6 Physical Machines** (1 Server, 5 Clients) - to reproduce the 6K persistent connections from 5 client machines.
+* **Concurrent Multi-threaded Client / Server Throughput**:
+  * **Minimum required**: **8 Physical Machines** (1 Server and 7 Clients to issue concurrent RPCs, or 1 Client and 7 Servers to sink concurrent RPCs).
+* **Cluster Benchmarks (Homa workloads W2 to W5)**:
+  * **Minimum required**: **10 Physical Machines** (All 10 nodes acting as both multi-threaded clients and servers concurrently).
+
