@@ -94,3 +94,206 @@ To successfully reproduce the performance benchmarks presented in the paper, ens
 * **Cluster Benchmarks (Homa workloads W2 to W5)**:
   * **Minimum required**: **10 Physical Machines** (All 10 nodes acting as both multi-threaded clients and servers concurrently).
 
+---
+
+## 5. Step-by-Step Reproduction Commands for eTran
+
+Below are the exact commands to start the microkernel, server, and client for each of the 9 reproduction measurements.
+
+### 5.1 Compilation Prerequisite
+On all nodes, compile the eTran project first:
+```sh
+cd ~/eTran
+./configure && make -C eTran
+```
+
+---
+
+### MEASURE 1: Homa Microbenchmarks
+* **Setup**: 2 physical machines (`node0` as server, `node1` as client).
+
+#### 1. On Server (`node0`):
+```sh
+cd ~/eTran/eTran/micro_kernel && sudo ./micro_kernel -i ens1f1np1 -q 20 -w 5 &
+sleep 2
+cd ~/eTran/eTran/homa_app && ./cp_node server
+```
+
+#### 2. On Client (`node1`):
+* **Median Latency (32B)**:
+  ```sh
+  cd ~/eTran/eTran/micro_kernel && sudo ./micro_kernel -i ens1f1np1 -q 20 -w 5 &
+  sleep 2
+  cd ~/eTran/eTran/homa_app
+  ETRAN_PROTO=homa ./cp_node client --workload 32 --first-server 0 --one-way
+  ```
+* **Throughput (1MB)**:
+  ```sh
+  ETRAN_PROTO=homa ./cp_node client --workload 1000000 --first-server 0 --one-way
+  ```
+* **Server Throughput (7 clients, 500KB)**:
+  ```sh
+  ETRAN_PROTO=homa ./cp_node client --workload 500000 --ports 7 --queues 20 --first-server 0 --one-way
+  ```
+* **Client RPC Rate (7 clients, 32B)**:
+  ```sh
+  ETRAN_PROTO=homa ./cp_node client --workload 32 --ports 7 --queues 20 --first-server 0 --one-way
+  ```
+
+---
+
+### MEASURE 2: Homa Cluster Slowdown
+* **Setup**: 10 physical machines (`node0` to `node9`), each running both client and server concurrently.
+
+#### On each node (`node<N>` where `N` is 0 to 9):
+```sh
+cd ~/eTran/eTran/micro_kernel && sudo ./micro_kernel -i ens1f1np1 -q 20 -w 4 &   # Use -w 2/3/4/5 for W2/W3/W4/W5
+sleep 2
+cd ~/eTran/eTran/homa_app
+ETRAN_PROTO=homa ./cp_node client --both 5 --id <N> --workload w4 --server-nodes 10 --queues 20 --first-server 0 --one-way
+```
+*To dump latency results, run inside the `./cp_node` interactive console:*
+```sh
+dump_times w4.txt
+```
+
+---
+
+### MEASURE 3: TCP Echo Throughput
+* **Setup**: 6 physical machines (`node0` as server, `node1`..`node5` as clients).
+
+#### 1. On Server (`node0`):
+```sh
+cd ~/eTran/eTran/micro_kernel && sudo ./micro_kernel -i ens1f1np1 -q 20 &
+sleep 2
+cd ~/eTran/eTran/tcp_app
+LD_PRELOAD=../shared_lib/libetran.so ETRAN_PROTO=tcp ETRAN_NR_APP_THREADS=5 ETRAN_NR_NIC_QUEUES=20 ./epoll_server -t 5 -b 1024 -s
+```
+
+#### 2. On each Client (`node1`..`node5`):
+* **Throughput (1KB messages)**:
+  ```sh
+  cd ~/eTran/eTran/micro_kernel && sudo ./micro_kernel -i ens1f1np1 -q 20 &
+  sleep 2
+  cd ~/eTran/eTran/tcp_app
+  LD_PRELOAD=../shared_lib/libetran.so ETRAN_PROTO=tcp ETRAN_NR_APP_THREADS=5 ETRAN_NR_NIC_QUEUES=20 ./epoll_client -t 5 -f 100 -o 64 -b 1024 -s -i <IP_node0>
+  ```
+* **Throughput (2KB messages)**: change `-b 1024` to `-b 2048`.
+
+---
+
+### MEASURE 4: Key-Value Store
+* **Setup**: 6 physical machines (`node0` as server, `node1`..`node5` as clients).
+
+#### 1. On Server (`node0`):
+```sh
+cd ~/eTran/eTran/micro_kernel && sudo ./micro_kernel -i ens1f1np1 -q 20 &
+sleep 2
+cd ~/eTran/eTran/tcp_app
+LD_PRELOAD=../shared_lib/libetran.so ETRAN_PROTO=tcp ETRAN_NR_APP_THREADS=5 ETRAN_NR_NIC_QUEUES=20 ./flexkvs_server -t 5
+```
+
+#### 2. On each Client (`node1`..`node5`):
+```sh
+cd ~/eTran/eTran/micro_kernel && sudo ./micro_kernel -i ens1f1np1 -q 20 &
+sleep 2
+cd ~/eTran/eTran/tcp_app
+LD_PRELOAD=../shared_lib/libetran.so ETRAN_PROTO=tcp ETRAN_NR_APP_THREADS=5 ETRAN_NR_NIC_QUEUES=20 ./flexkvs_bench -t 5 -C 6000 -p 32 -n 100000 -v 64 -z 0.9 <IP_node0>:11211
+```
+
+---
+
+### MEASURE 5: Precision of Rate Limiting (Pacing)
+* **Setup**: 2 physical machines (`node0` as server, `node1` as client).
+
+#### 1. On Server (`node0`):
+```sh
+cd ~/eTran/eTran/micro_kernel && sudo ./micro_kernel -i ens1f1np1 -q 20 -w 5 &
+sleep 2
+cd ~/eTran/eTran/homa_app && ./cp_node server
+```
+
+#### 2. On Client (`node1`) with 8 Gbps pacing target:
+```sh
+cd ~/eTran/eTran/micro_kernel && sudo ./micro_kernel -i ens1f1np1 -q 20 -w 5 &
+sleep 2
+cd ~/eTran/eTran/homa_app
+ETRAN_PROTO=homa ./cp_node client --workload 1000000 --first-server 0 --gbps 8.0
+```
+
+---
+
+### MEASURE 6: Overhead of XDP_EGRESS
+* **Setup**: Standalone on **1 physical machine** (No eTran microkernel needed).
+
+```sh
+cd ~/eTran/bench-afxdp
+sudo taskset -c 2 ./xdpsock -i ens1f1np1 -q 2 -t -f 64 -B -N
+```
+
+---
+
+### MEASURE 7: Packet Generation with XDP_GEN
+* **Setup**: Standalone on **1 physical machine**.
+
+```sh
+cd ~/eTran/bench-afxdp
+sudo taskset -c 2,3 ./xdpsock -i ens1f1np1 -q 2 -l -B -N
+```
+
+---
+
+### MEASURE 8: CPU Cycles per Request (Perf)
+* **Setup**: 2 physical machines (`node0` as server, `node1` as client).
+
+#### On Server (`node0`):
+```sh
+cd ~/eTran/eTran/micro_kernel
+sudo perf record -g -e cycles:u ./micro_kernel -i ens1f1np1 -q 1
+# Alternatively, attach dynamically to already running microkernel:
+# sudo perf record -g -e cycles:u -p $(pgrep micro_kernel) -- sleep 30
+sudo perf report
+```
+
+---
+
+### MEASURE 9: Retransmission under Packet Loss
+* **Setup**: 2 physical machines (`node0` as server, `node1` as client).
+
+#### Add artificial packet loss on both nodes (`node0` and `node1`):
+```sh
+sudo tc qdisc add dev ens1f1np1 root netem loss 1%     # To introduce 1% loss
+sudo tc qdisc change dev ens1f1np1 root netem loss 5%  # To switch to 5% loss
+# To clean up / remove packet loss:
+sudo tc qdisc del dev ens1f1np1 root
+```
+
+#### TCP Retransmission (100 concurrent flows):
+* **On Server (`node0`)**:
+  ```sh
+  sudo ./micro_kernel -i ens1f1np1 -q 20 &
+  sleep 2
+  LD_PRELOAD=../shared_lib/libetran.so ETRAN_PROTO=tcp ETRAN_NR_APP_THREADS=1 ETRAN_NR_NIC_QUEUES=1 ./epoll_server -b 1024 -s
+  ```
+* **On Client (`node1`)**:
+  ```sh
+  sudo ./micro_kernel -i ens1f1np1 -q 20 &
+  sleep 2
+  LD_PRELOAD=../shared_lib/libetran.so ETRAN_PROTO=tcp ETRAN_NR_APP_THREADS=1 ETRAN_NR_NIC_QUEUES=1 ./epoll_client -f 100 -b 1024 -s -i <IP_node0>
+  ```
+
+#### Homa Retransmission (100 concurrent flows in both mode):
+* **On `node0`**:
+  ```sh
+  sudo ./micro_kernel -i ens1f1np1 -q 20 -w 5 &
+  sleep 2
+  ETRAN_PROTO=homa ./cp_node client --both 5 --id 0 --workload 1000 --ports 100 --queues 20 --server-nodes 2 --first-server 0
+  ```
+* **On `node1`**:
+  ```sh
+  sudo ./micro_kernel -i ens1f1np1 -q 20 -w 5 &
+  sleep 2
+  ETRAN_PROTO=homa ./cp_node client --both 5 --id 1 --workload 1000 --ports 100 --queues 20 --server-nodes 2 --first-server 0
+  ```
+
+
