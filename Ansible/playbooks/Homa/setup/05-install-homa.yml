@@ -3,7 +3,7 @@
   hosts: node0
   vars:
     homa_num_nodes: "{{ groups['all'] | length }}"
-    homa_first_node: 0
+    homa_first_node: 1
   tasks:
     - name: Build the Homa kernel module and utilities
       ansible.builtin.shell:
