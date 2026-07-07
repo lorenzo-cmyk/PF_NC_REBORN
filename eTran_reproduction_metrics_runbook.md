@@ -937,7 +937,7 @@ Homa, default 20 queues, SMT=ON, CP_CPU=19.
 | **Baseline (before any of this work)** | 12.59 µs | 12.78 Gbps | 927 Kops | reference |
 | `irqbalance` disabled | 12.5 µs | 12.8 Gbps | 928 Kops | small / neutral |
 | `governor=performance` (via tuned) | 12.5 µs | 12.8 Gbps | 928 Kops | small / neutral |
-| THP=never (with `disable-thp` systemd unit) | 12.5 µs | 12.8 Gbps | 928 Kops | none measurable |
+| THP=never (`echo never > /sys/kernel/mm/transparent_hugepage/enabled`) | 12.5 µs | 12.8 Gbps | 928 Kops | none measurable |
 | `kernel.bpf_stats_enabled=0` | 12.5 µs | 12.8 Gbps | 928 Kops | none measurable |
 | `kernel.numa_balancing=0` | 12.5 µs | 12.8 Gbps | 928 Kops | none measurable |
 | `ksm/run=0` | 12.5 µs | 12.8 Gbps | 928 Kops | none measurable |
@@ -1041,14 +1041,17 @@ across 20 queues).
 **Expected**: cache-locality win. All packets processed by one
 queue's XSK, on one core, with no RSS distribution overhead.
 
-**Measured**: metric 1 P50 went 12.5 → 10.64 µs. Exciting. But the
-win was an **illusion** — the rule is overridden by the eTran
-microkernel's BPF RSS. Verified by reading `/proc/interrupts` after
-adding the rule: queue 1 received 2.6M IRQs while queue 4 received
-14K. The microkernel's `SEC("xdp_sock")` at
-`micro_kernel/eBPF/homa/main.c:298` parses incoming packets and
-tail-calls its own transport programs, bypassing the kernel's
-`ethtool -U` rules entirely.
+**Measured**: metric 1 P50 dropped from ~12.5 µs to ~10.6 µs at first glance
+— a 2 µs win. But the win was an **illusion** — verified by reading
+`/proc/interrupts` after adding the rule: queue 1 received 2.6M IRQs
+while queue 4 received only 14K. If the rule had taken effect, queue 4
+would be the busy one. The microkernel's `SEC("xdp_sock")` at
+`micro_kernel/eBPF/entrance/entrance.c:48` parses incoming packets and
+tail-calls into the Homa `xdp_sock` (`homa/main.c:293`) or TCP
+`xdp_sock` (`tcp/main.c:265`) transport programs, bypassing the
+kernel's `ethtool -U` rules entirely. The 2 µs drop is most likely
+noise or a side-effect of the measurement order, not a real RSS
+improvement.
 
 **Verdict**: do not bother. The eTran microkernel's BPF path is
 closed. For a 2-queue kernel, the rule *might* work (you'd see all
@@ -1062,8 +1065,8 @@ and `echo 200000 > /sys/class/net/ens1f1np1/gro_flush_timeout`.
 **Expected**: lower NAPI interrupt deferral = lower latency for
 small-packet workloads.
 
-**Measured**: metric 1 P50 stayed at 10.63 µs (same as without
-napi/gro tuning). The tunings control how the kernel's NAPI softirq
+**Measured**: metric 1 P50 showed no consistent change from the
+~12.5 µs baseline. The tunings control how the kernel's NAPI softirq
 consolidates packets. eTran uses AF_XDP busy-poll, which bypasses
 NAPI entirely. The tunings only matter for the small TCP/UDP traffic
 on the kernel network stack (cp_node handshake, ARP, etc.), which is
@@ -1094,7 +1097,8 @@ startup (line 107) — disable every NIC offload.
 metric 5 to drop 927 → 568 Kops (39% regression). The other offloads
 (TSO, GSO, rx-checksumming) were not tested individually. For our
 high-rate 32B workload, GRO batching is the difference between
-1.5M ops/sec ceiling and 0.6M ops/sec ceiling.
+~927 Kops and ~568 Kops — turning it off nearly halves the per-queue
+packet rate.
 
 **Verdict**: do not turn off GRO. The other offloads might be safe to
 disable for our workload, but the throughput hit from GRO alone is
@@ -1144,7 +1148,7 @@ tunings. The candidates:
   chain implies ~8 BPF program executions per grant. If each step is
   1 µs, that's 8 µs of grant processing per RPC — explains the
   13 Gbps ceiling on metric 3.
-- **`micro_kernel/eBPF/homa/main.c:413,446,455,583`** — the
+- **`micro_kernel/eBPF/homa/main.c:418,451,460,588`** — the
   `bpf_redirect_map(&xsks_map, ...)` calls in the Homa XDP program.
   Each call goes through the BPF map lookup, which can be slow for
   large maps.
@@ -1251,12 +1255,12 @@ detail.
     Always filter with `grep -v '^#'` before post-processing.
 
 17. **`perf` breaks Homa AF_XDP but works for TCP** — `perf stat` and `perf record`
-     insert sampling interrupts that stall Homa's time-sensitive AF_XDP busy-poll
-     loop (0 completions under perf). However, TCP benchmarks work fine under perf
-      (Metric 21 completed with 63.8B cycles, 94.8B instructions over 25s). The
-     microkernel's AF_XDP polling on a separate thread is not disrupted by perf
-     on the application thread. Building kernel-matching `perf` from eTran kernel
-     source requires `make NO_JEVENTS=1 NO_LIBTRACEEVENT=1 NO_LIBPFM4=1`.
-     Homa cycles/request (Metric 22) is dominated by idle AF_XDP polling (99.9+%).
-     Paper's 5.48 kcycles measured on kernel Homa module (no busy polling).
-     Active processing per 1MB RPC in eTran estimated at ~2µs (~5 kcycles).
+    insert sampling interrupts that stall Homa's time-sensitive AF_XDP busy-poll
+    loop (0 completions under perf). However, TCP benchmarks work fine under perf
+    (Metric 21 completed with 63.8B cycles, 94.8B instructions over 25s). The
+    microkernel's AF_XDP polling on a separate thread is not disrupted by perf
+    on the application thread. Building kernel-matching `perf` from eTran kernel
+    source requires `make NO_JEVENTS=1 NO_LIBTRACEEVENT=1 NO_LIBPFM4=1`.
+    Homa cycles/request (Metric 22) is dominated by idle AF_XDP polling (99.6%).
+    Paper's 5.48 kcycles measured on kernel Homa module (no busy polling).
+    Active processing per 1MB RPC in eTran estimated at ~2µs (~5 kcycles).
