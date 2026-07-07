@@ -10,10 +10,10 @@ cd Ansible
 
 # Required after every reboot:
 .venv/bin/ansible-playbook playbooks/eTran/evaluation/01-network-prep.yml
-.venv/bin/ansible-playbook playbooks/eTran/evaluation/04-verify-network.yml
+.venv/bin/ansible-playbook playbooks/eTran/evaluation/03-verify-network.yml
 
 # Optional: MTU (default 1500, skip for standard runs)
-# .venv/bin/ansible-playbook playbooks/eTran/evaluation/03-mtu.yml --extra-vars 'mtu=9000'
+# .venv/bin/ansible-playbook playbooks/eTran/evaluation/02-mtu.yml --extra-vars 'mtu=9000'
 ```
 
 ## Critical procedure for running benchmarks

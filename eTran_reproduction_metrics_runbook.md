@@ -90,7 +90,7 @@
 
 ---
 
-Cross-references each metric from `eTran_reproduction_metrics_relevant.md`
+Cross-references each metric from `eTran_reproduction_metrics.md`
 against source code in:
 - **eTran repo**: `https://github.com/eTran-NSDI25/eTran` (`homa_app/cp_node.cc`,
   `tcp_app/epoll_*.cc`, `tcp_app/flexkvs_*`, `lib/eTran_common.cc`)
@@ -999,7 +999,7 @@ still in the repo):
 - `evaluation/01-network-prep.yml` — per-session: ARP permanent
   entries, /etc/hosts, NIC interrupt coalescing (rx-usecs=0, tx-usecs=5,
   adaptive-rx/tx off), flow control off. Resets every reboot.
-- `evaluation/03-mtu.yml` — per-session: optional MTU=9000.
+- `evaluation/02-mtu.yml` — per-session: optional MTU=9000 (default 1500, no-op).
 
 That is the **complete** list of active tunings. Anything else you
 see in the reference recipe was tried and is documented above.
