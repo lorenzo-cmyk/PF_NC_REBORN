@@ -13,17 +13,17 @@ Use these target values and formulas to verify and reproduce the evaluations des
 | Networking Stack | Measurement Description | Measurement Unit | Expected Value | Measured Value | Reproduction Priority |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **eTran - Homa** | Median RTT latency for short messages (32B requests back-to-back, single client thread) | µs | **11.8** |  | **High (2-Node Micro)** |
-| **Linux - Homa** | Median RTT latency for short messages (32B requests back-to-back, single client thread) | µs | **15.6** | — | **High (2-Node Micro)** |
+| **Linux - Homa** | Median RTT latency for short messages (32B requests back-to-back, single client thread) | µs | 15.6 | **15.26** | **High (2-Node Micro)** |
 | **eTran - Homa** | Throughput for large messages (1MB requests back-to-back) | Gbps | **17.7** | | **High (2-Node Micro)** |
-| **Linux - Homa** | Throughput for large messages (1MB requests back-to-back) | Gbps | **14.5** | — | **High (2-Node Micro)** |
+| **Linux - Homa** | Throughput for large messages (1MB requests back-to-back) | Gbps | 14.5 | **17.9** | **High (2-Node Micro)** |
 | **eTran - Homa** | Multi-threaded server throughput (receiving concurrent 500KB RPCs from 7 clients) | Gbps | **23.0** | | Medium |
-| **Linux - Homa** | Multi-threaded server throughput (receiving concurrent 500KB RPCs from 7 clients) | Gbps | **23.1** | — | Medium |
+| **Linux - Homa** | Multi-threaded server throughput (receiving concurrent 500KB RPCs from 7 clients) | Gbps | 23.1 | **23.125** | Medium |
 | **eTran - Homa** | Multi-threaded client throughput (sending concurrent 500KB RPCs to 7 servers) | Gbps | **22.7** | | Medium |
-| **Linux - Homa** | Multi-threaded client throughput (sending concurrent 500KB RPCs to 7 servers) | Gbps | **22.9** | — | Medium |
+| **Linux - Homa** | Multi-threaded client throughput (sending concurrent 500KB RPCs to 7 servers) | Gbps | 22.9 | **23.1** | Medium |
 | **eTran - Homa** | Client RPC rate for small messages (32B) | Mops | **2.9** | | Medium |
-| **Linux - Homa** | Client RPC rate for small messages (32B) | Mops | **1.7** | — | Medium |
+| **Linux - Homa** | Client RPC rate for small messages (32B) | Mops | **1.7** | 0.7 | Medium |
 | **eTran - Homa** | Server RPC rate for small messages (32B) | Mops | **3.3** | | Medium |
-| **Linux - Homa** | Server RPC rate for small messages (32B) | Mops | **1.8** | — | Medium |
+| **Linux - Homa** | Server RPC rate for small messages (32B) | Mops | **1.8** | 0.9 | Medium |
 | **eTran - Homa** | P99 tail latency slowdown in workloads dominated by short messages (W2, W3) | Slowdown Factor | `Linux - Homa (P99 Slowdown) / (3.9 ~ 7.5)` | | **High (10-Node Cluster)** |
 | **eTran - Homa** | P50 median latency slowdown in workloads dominated by short messages (W2, W3) | Slowdown Factor | `Linux - Homa (P50 Slowdown) / (1.4 ~ 3.6)` | | **High (10-Node Cluster)** |
 | **eTran - Homa** | RTT P50 slowdown for the shortest 10% of RPCs in Workload W4 (20 Gbps) | Slowdown Factor | `Linux - Homa (W4 P50 Slowdown) / 4.1` | | **High (10-Node Cluster)** |
