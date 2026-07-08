@@ -13,17 +13,17 @@ Use these target values and formulas to verify and reproduce the evaluations des
 | Networking Stack | Measurement Description | Measurement Unit | Expected Value | Measured Value | Achieved (vs DCTCP Baseline) | Reproduction Priority |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **eTran - Homa** | Median RTT latency for short messages (32B requests back-to-back, single client thread) | µs | **11.8** | **12.59 µs** | — | **High (2-Node Micro)** |
-| **Linux - Homa** | Median RTT latency for short messages (32B requests back-to-back, single client thread) | µs | **15.6** | — | — | **High (2-Node Micro)** |
+| **Linux - Homa** | Median RTT latency for short messages (32B requests back-to-back, single client thread) | µs | 15.6 | **15.26** | **High (2-Node Micro)** |
 | **eTran - Homa** | Throughput for large messages (1MB requests back-to-back) | Gbps | **17.7** | **16.6 Gbps** | — | **High (2-Node Micro)** |
-| **Linux - Homa** | Throughput for large messages (1MB requests back-to-back) | Gbps | **14.5** | — | — | **High (2-Node Micro)** |
+| **Linux - Homa** | Throughput for large messages (1MB requests back-to-back) | Gbps | 14.5 | **17.9** | **High (2-Node Micro)** |
 | **eTran - Homa** | Multi-threaded server throughput (receiving concurrent 500KB RPCs from 7 clients) | Gbps | **23.0** | **~12.78 Gbps** | — | Medium |
-| **Linux - Homa** | Multi-threaded server throughput (receiving concurrent 500KB RPCs from 7 clients) | Gbps | **23.1** | — | — | Medium |
+| **Linux - Homa** | Multi-threaded server throughput (receiving concurrent 500KB RPCs from 7 clients) | Gbps | 23.1 | **23.125** | Medium |
 | **eTran - Homa** | Multi-threaded client throughput (sending concurrent 500KB RPCs to 7 servers) | Gbps | **22.7** | **~19.5 Gbps** | — | Medium |
-| **Linux - Homa** | Multi-threaded client throughput (sending concurrent 500KB RPCs to 7 servers) | Gbps | **22.9** | — | — | Medium |
+| **Linux - Homa** | Multi-threaded client throughput (sending concurrent 500KB RPCs to 7 servers) | Gbps | 22.9 | **23.1** | Medium |
 | **eTran - Homa** | Client RPC rate for small messages (32B) | Mops | **2.9** | **~0.93 Mops** | — | Medium |
-| **Linux - Homa** | Client RPC rate for small messages (32B) | Mops | **1.7** | — | — | Medium |
+| **Linux - Homa** | Client RPC rate for small messages (32B) | Mops | **1.7** | 0.7 | Medium |
 | **eTran - Homa** | Server RPC rate for small messages (32B) | Mops | **3.3** | **~1.12 Mops** | — | Medium |
-| **Linux - Homa** | Server RPC rate for small messages (32B) | Mops | **1.8** | — | — | Medium |
+| **Linux - Homa** | Server RPC rate for small messages (32B) | Mops | **1.8** | 0.9 | Medium |
 | **eTran - Homa** | P99 tail latency slowdown in workloads dominated by short messages (W2, W3) | Slowdown Factor | `Linux - Homa (P99 Slowdown) / (3.9 ~ 7.5)` | eTran raw: W2 P99=1344 µs, W3 P99=1428 µs (no Linux baseline) | — | **High (10-Node Cluster)** |
 | **eTran - Homa** | P50 median latency slowdown in workloads dominated by short messages (W2, W3) | Slowdown Factor | `Linux - Homa (P50 Slowdown) / (1.4 ~ 3.6)` | eTran raw: W2 P50=109 µs, W3 P50=115 µs (no Linux baseline) | — | **High (10-Node Cluster)** |
 | **eTran - Homa** | RTT P50 slowdown for the shortest 10% of RPCs in Workload W4 (20 Gbps) | Slowdown Factor | `Linux - Homa (W4 P50 Slowdown) / 4.1` | eTran raw: 2848 µs (no Linux baseline) | — | **High (10-Node Cluster)** |
@@ -52,7 +52,7 @@ Use these target values and formulas to verify and reproduce the evaluations des
 | **eTran - TCP** | Total CPU cycles spent per request (total kcycles, see breakdown below) | kcycles | **4.37** | **~2.93 kcycles (server-side, perf stat -p during 1×1 × 64 run, 884 Kops)** | — (paper: 4.37; our value lower — likely not at peak NAPI stress) | **High (2-Node CPU Profiling)** |
 | **Linux - TCP** (DCTCP) | Total CPU cycles spent per request (total kcycles, see breakdown below) | kcycles | **12.51** | **~7.4 kcycles** (client-side) | — | **High (2-Node CPU Profiling)** |
 | **eTran - Homa** | Total CPU cycles spent per request (total kcycles, see breakdown below) | kcycles | **5.48** | **~1357 kcycles (AF_XDP busy-poll)** | — | **High (2-Node CPU Profiling)** |
-| **Linux - Homa** | Total CPU cycles spent per request (total kcycles, see breakdown below) | kcycles | **17.43** | — | — | **High (2-Node CPU Profiling)** |
+| **Linux - Homa** | Total CPU cycles spent per request (total kcycles, see breakdown below) | kcycles | **17.43** | — | **High (2-Node CPU Profiling)** |
 | **eTran (Pacing)** | Traffic shaping rate conformance deviation under pacing engine (1MB @ 8 Gbps) | % | **< 0.4** | | Low |
 | **eTran (Pacing)** | Aggregate throughput for multiple flows with an 8 Gbps target | Mbps | **7950 ~ 8050** | | Low |
 | **eTran - TCP** | Throughput penalty under 1% packet loss | % | **~8** | | Low |
